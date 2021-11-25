@@ -23,13 +23,24 @@ export default async function handler(
     if (!socketId || typeof socketId !== "string")
       return res.status(400).send("Invalid socketId");
 
+    // Add socket to list of sockets in current session
     if (!socketIds.includes(socketId)) {
       socketIds.push(socketId);
       notify(res, key, ...handles);
     }
 
+    // Assign the socket a unique and stable index so 
+    // different sockets on the same session (i.e. different tabs)
+    // can make unique requests if necessary.
+    // Starts from 1 to make it easy to distinguish from undefined
+    const socketIndices = (session.socketIndices ?? {}) as Record<string, number>;
+    if(!(socketId in socketIndices)) {
+      socketIndices[socketId] = 1 + Math.max(0, ...Object.values(socketIndices));
+    }
+
     session.socketIds = socketIds;
-    return res.status(200).send("OK");
+    session.socketIndices = socketIndices;
+    return res.json({socketIndex: socketIndices[socketId]});
   }
 
   return res.status(501).send("Not Implemented");
