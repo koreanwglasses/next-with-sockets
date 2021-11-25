@@ -29,18 +29,22 @@ export default async function handler(
       notify(res, key, ...handles);
     }
 
-    // Assign the socket a unique and stable index so 
+    // Assign the socket a unique and stable index so
     // different sockets on the same session (i.e. different tabs)
     // can make unique requests if necessary.
     // Starts from 1 to make it easy to distinguish from undefined
-    const socketIndices = (session.socketIndices ?? {}) as Record<string, number>;
-    if(!(socketId in socketIndices)) {
-      socketIndices[socketId] = 1 + Math.max(0, ...Object.values(socketIndices));
+    const socketIndices = (session.socketIndices ?? {}) as Record<
+      string,
+      number
+    >;
+    if (!(socketId in socketIndices)) {
+      socketIndices[socketId] =
+        1 + Math.max(0, ...Object.values(socketIndices));
     }
 
     session.socketIds = socketIds;
     session.socketIndices = socketIndices;
-    return res.json({socketIndex: socketIndices[socketId]});
+    return res.json({ socketIndex: socketIndices[socketId] });
   }
 
   return res.status(501).send("Not Implemented");

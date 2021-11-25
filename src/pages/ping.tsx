@@ -7,12 +7,14 @@ import {
   Typography,
 } from "@mui/material";
 import { useList } from "react-use";
-import { useSocket } from "../lib/use-socket";
+import { useSocket, useSocketIndex } from "../lib/use-socket";
 import { useSubscription } from "../lib/use-subscription";
+import { post } from "../lib/fetchers";
 
 const Ping = () => {
   const [messages, { push }] = useList<string>();
   const [waiting, setWaiting] = useState<boolean>();
+  const socketIndex = useSocketIndex();
 
   const { data } = useSubscription("/api/socket/session/link");
   const { socketsLinked } = data ?? {};
@@ -43,12 +45,15 @@ const Ping = () => {
         {data ? socketsLinked : <CircularProgress size={10} />} sockets linked
         to current session
       </Typography>
+      <Typography>
+        Current socket index: {socketIndex || <CircularProgress size={10} />}
+      </Typography>
       <Button
         disabled={waiting}
         variant="contained"
         onClick={async () => {
-          const res = await fetch("/api/ping", { method: "post" });
-          if (res.ok) setWaiting(true);
+          await post("/api/ping", { socketIndex });
+          setWaiting(true);
         }}
       >
         Ping

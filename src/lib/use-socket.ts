@@ -19,5 +19,5 @@ export function useSocket(cb: (socket: Socket) => unknown, deps: unknown[]) {
 
 export function useSocketIndex() {
   const context = useContext(SocketIOContext);
-  return context?.socketIndex
+  return context?.socketIndex;
 }

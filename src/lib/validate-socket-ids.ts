@@ -22,3 +22,25 @@ export async function validateSocketIds(
   session.socketIDs = socketIds;
   return socketIds;
 }
+
+export async function validateSocketIndex(
+  req: NextApiRequest,
+  res: NextApiResponse,
+  socketIndex: number
+) {
+  const socketIds = await validateSocketIds(req, res);
+  if (!socketIds) return;
+
+  const session = await getSession(req, res);
+  const socketId = socketIds.find(
+    (socketId) => session.socketIndices?.[socketId] === socketIndex
+  );
+
+  const io = res.socket.server.io;
+
+  if (!io.sockets.sockets.get(socketId!)?.connected) {
+    return res.status(400).send("Invalid socket index");
+  }
+
+  return socketId;
+}
