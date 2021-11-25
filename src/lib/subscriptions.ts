@@ -13,10 +13,10 @@ export async function subscribeMiddleware(
   ...scope: string[]
 ) {
   if (req.method === "GET") {
-    if (req.query.subscribe) {
+    if (req.query.subscribe === "true") {
       return subscribe(req, res, key, ...scope);
     }
-    if (req.query.unsubscribe) {
+    if (req.query.unsubscribe === "true") {
       return unsubscribe(req, res, key, ...scope);
     }
   }

@@ -17,8 +17,13 @@ export function useSubscription<T = any>(
     [mutate, pathname]
   );
 
-  const result = useSWR<T>(ready ? pathname : null, (pathname) =>
-    get(pathname, { ...(body ?? {}), subscribe: true })
+  const result = useSWR<T>(
+    pathname + (ready ? "" : "#nosub"),
+    (pathname: string) =>
+      get(pathname, {
+        ...(body ?? {}),
+        subscribe: !pathname.endsWith("#nosub"),
+      })
   );
 
   return result;
