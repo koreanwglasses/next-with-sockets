@@ -12,8 +12,8 @@ export default async function handler(
   const socketIds = (await validateSocketIds(req, res, true))!;
 
   const key = "/api/socket/session/link";
-  const scopes = [session.id, ...socketIds];
-  if (!(await subscribeMiddleware(req, res, key, ...scopes))) return;
+  const handles = [session.id, ...socketIds];
+  if (!(await subscribeMiddleware(req, res, key, ...handles))) return;
 
   if (req.method === "GET") {
     return res.json({ socketsLinked: socketIds.length });
@@ -26,7 +26,7 @@ export default async function handler(
 
     if (!socketIds.includes(socketId)) {
       socketIds.push(socketId);
-      notify(res, key, ...scopes);
+      notify(res, key, ...handles);
     }
 
     session.socketIds = socketIds;
