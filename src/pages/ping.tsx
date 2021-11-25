@@ -40,7 +40,7 @@ const Ping = () => {
       }}
     >
       <Typography>
-        {data ? socketsLinked : <CircularProgress size={20} />} sockets linked
+        {data ? socketsLinked : <CircularProgress size={10} />} sockets linked
         to current session
       </Typography>
       <Button
