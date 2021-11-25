@@ -1,4 +1,3 @@
-import deepEqual from "deep-equal";
 import type { NextApiRequest } from "next";
 import { getSession } from "../../../../lib/get-session";
 import { notify, subscribeMiddleware } from "../../../../lib/subscriptions";
