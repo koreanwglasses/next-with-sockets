@@ -1,6 +1,5 @@
 {
-  "name": "fish",
-  "private": true,
+  "name": "next-with-sockets",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
