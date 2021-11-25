@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import {
+  Alert,
   Box,
   Button,
   CircularProgress,
@@ -14,6 +15,8 @@ import { post } from "../lib/fetchers";
 const Ping = () => {
   const [messages, { push }] = useList<string>();
   const [waiting, setWaiting] = useState<boolean>();
+  const [error, setError] = useState<Error & { code: number }>();
+
   const socketIndex = useSocketIndex();
 
   const { data } = useSubscription("/api/socket/session/link");
@@ -48,12 +51,23 @@ const Ping = () => {
       <Typography>
         Current socket index: {socketIndex || <CircularProgress size={10} />}
       </Typography>
+      <Collapse in={!!error}>
+        <Alert severity="error">
+          Error {error?.code}: {error?.message}
+          <br />
+          Try refreshing your browser
+        </Alert>
+      </Collapse>
       <Button
         disabled={waiting}
         variant="contained"
         onClick={async () => {
-          await post("/api/ping", { socketIndex });
-          setWaiting(true);
+          try {
+            await post("/api/ping", { socketIndex });
+            setWaiting(true);
+          } catch (e) {
+            setError(e as any);
+          }
         }}
       >
         Ping
