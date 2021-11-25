@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
+import { useSWRConfig } from "swr";
 import io, { Socket } from "socket.io-client";
 import { post } from "./fetchers";
 
 export function useSocket(cb: (socket: Socket) => unknown, deps: unknown[]) {
+  const { mutate } = useSWRConfig();
   const [ready, setReady] = useState(false);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -14,6 +16,9 @@ export function useSocket(cb: (socket: Socket) => unknown, deps: unknown[]) {
       await post("api/socket/session/link", { socketId: socket.id });
       setReady(true);
     });
+    socket.on("disconnect", () => {
+      mutate("api/socket/session/link");
+    });
 
     cb_(socket);
 
@@ -21,7 +26,7 @@ export function useSocket(cb: (socket: Socket) => unknown, deps: unknown[]) {
       setReady(false);
       socket.disconnect();
     };
-  }, [cb_]);
+  }, [cb_, mutate]);
 
   return ready;
 }
