@@ -1,26 +1,30 @@
-import React, { useCallback, useState } from "react";
-import { Box, Button, CircularProgress, Collapse } from "@mui/material";
+import React, { useState } from "react";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Collapse,
+  Typography,
+} from "@mui/material";
 import { useList } from "react-use";
 import { useSocket } from "../lib/use-socket";
+import { useSubscription } from "../lib/use-subscription";
 
 const Ping = () => {
   const [messages, { push }] = useList<string>();
   const [waiting, setWaiting] = useState<boolean>();
 
-  useSocket(
-    useCallback(
-      (socket) => {
-        socket.on("connect", () => {
-          console.log("Connected to socket!", socket.id);
-        });
+  const { data } = useSubscription("/api/socket/session/link");
+  const { socketsLinked } = data ?? {};
 
-        socket.on("message", (message: string) => {
-          push(message);
-          setWaiting(false);
-        });
-      },
-      [push]
-    )
+  useSocket(
+    (socket) => {
+      socket.on("message", (message: string) => {
+        push(message);
+        setWaiting(false);
+      });
+    },
+    [push]
   );
 
   return (
@@ -35,6 +39,10 @@ const Ping = () => {
         gap: 1,
       }}
     >
+      <Typography>
+        {data ? socketsLinked : <CircularProgress size={20} />} sockets linked
+        to current session
+      </Typography>
       <Button
         disabled={waiting}
         variant="contained"

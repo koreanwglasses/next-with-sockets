@@ -1,5 +1,6 @@
 {
   "name": "next-with-sockets",
+  "version": "0.0.0-alpha.0",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -12,15 +13,18 @@
     "@emotion/styled": "^11.6.0",
     "@mui/material": "^5.2.0",
     "@mui/system": "^5.2.0",
+    "deep-equal": "^2.0.5",
     "next": "latest",
     "next-session": "^4.0.4",
     "react": "17.0.2",
     "react-dom": "17.0.2",
     "react-use": "^17.3.1",
     "socket.io": "^4.4.0",
-    "socket.io-client": "^4.4.0"
+    "socket.io-client": "^4.4.0",
+    "swr": "^1.0.1"
   },
   "devDependencies": {
+    "@types/deep-equal": "^1.0.1",
     "@types/node": "16.11.10",
     "@types/react": "17.0.37",
     "eslint": "7",
