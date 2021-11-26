@@ -1,6 +1,6 @@
 import type { NextApiRequest } from "next";
 import { getSession } from "../../../../lib/get-session";
-import { linkSocket, notify, subscribe } from "../../../../lib/subscriptions";
+import { notify, subscribe } from "../../../../lib/subscriptions";
 
 export default async function handler(
   req: NextApiRequest,
@@ -42,9 +42,6 @@ export default async function handler(
     if (!socketIds.includes(socketId)) {
       socketIds.push(socketId);
       session.socketIds = socketIds;
-
-      // Also add socket to any session scoped subscriptions
-      await linkSocket(req, res, socketId);
 
       // Notify subscribers of changes
       await session.commit();

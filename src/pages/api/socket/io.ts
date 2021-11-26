@@ -25,7 +25,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
         const sessions = await Session.find({
           "session.socketIds": socket.id,
-        }).lean().exec();
+        })
+          .lean()
+          .exec();
 
         await Session.updateMany(
           { "session.socketIds": socket.id },
