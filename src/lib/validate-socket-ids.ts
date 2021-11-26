@@ -11,15 +11,23 @@ export async function validateSocketIds(
   let socketIds = (session.socketIds ?? []) as string[];
 
   const io = res.socket.server.io;
+
+  // Clean up dead sockets
   socketIds = socketIds.filter(
     (socketId) => io.sockets.sockets.get(socketId)?.connected
   );
+  session.socketIds = socketIds;
 
+  for (const socketId in session.socketIndices ?? {}) {
+    if (!io.sockets.sockets.get(socketId)?.connected)
+      delete session.socketIndices[socketId];
+  }
+
+  // Error if there are no sockets and `allowNone` is false
   if (!allowNone && !socketIds?.length) {
     return res.status(400).send("No sockets linked to current session");
   }
 
-  session.socketIDs = socketIds;
   return socketIds;
 }
 

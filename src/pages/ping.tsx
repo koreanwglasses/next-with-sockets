@@ -23,12 +23,12 @@ const Ping = () => {
   const { socketsLinked } = data ?? {};
 
   useSocket(
-    (socket) => {
-      socket.on("message", (message: string) => {
+    () => ({
+      message: (message: string) => {
         push(message);
         setWaiting(false);
-      });
-    },
+      },
+    }),
     [push]
   );
 

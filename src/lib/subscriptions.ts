@@ -1,73 +1,63 @@
 import { NextApiRequest } from "next";
-import { Server as IO } from "socket.io";
-import { validateSocketIds } from "./validate-socket-ids";
-
-function getRooms(key: string, ...handles: string[]) {
-  return handles.map((scope) => `${key}:${scope}`);
-}
-
-export async function subscribeMiddleware(
-  req: NextApiRequest,
-  res: NextApiResponse,
-  key: string,
-  ...handles: string[]
-) {
-  if (req.method === "GET") {
-    if (req.query.subscribe === "true") {
-      return subscribe(req, res, key, ...handles);
-    }
-    if (req.query.unsubscribe === "true") {
-      return unsubscribe(req, res, key, ...handles);
-    }
-  }
-  return true;
-}
+import { Server } from "socket.io";
+import { getSession } from "./get-session";
+import { validateSocketIds, validateSocketIndex } from "./validate-socket-ids";
 
 export async function subscribe(
   req: NextApiRequest,
   res: NextApiResponse,
   key: string,
-  ...handles: string[]
+  socketIndex?: number
 ) {
-  const rooms = getRooms(key, ...handles);
-  const socketIds = await validateSocketIds(req, res);
-  if (!socketIds) return;
+  const io = res.socket.server.io;
+  const room = `subscribers:${key}`;
 
-  res.socket.server.io.to(socketIds).socketsJoin(rooms);
+  if (socketIndex) {
+    const socketId = await validateSocketIndex(req, res, socketIndex);
+    if (!socketId) return;
 
-  return true;
-}
+    io.to(socketId).socketsJoin(room);
+  } else {
+    const socketIds = await validateSocketIds(req, res, true);
+    if (!socketIds) return;
 
-export async function unsubscribe(
-  req: NextApiRequest,
-  res: NextApiResponse,
-  key: string,
-  ...handles: string[]
-) {
-  const rooms = getRooms(key, ...handles);
+    // If no socket is specified, notify all sockets assoc. with
+    // current session.
+    io.to(socketIds).socketsJoin(room);
 
-  const socketIds = await validateSocketIds(req, res);
-  if (!socketIds) return;
-
-  res.socket.server.io.to(socketIds).socketsLeave(rooms);
-
-  return true;
+    // Record it for future sockets
+    const session = await getSession(req, res);
+    const sessionScopedSubscriptions = (session.sessionScopedSubscriptions ??
+      []) as string[];
+    if (!sessionScopedSubscriptions.includes(key))
+      sessionScopedSubscriptions.push(key);
+    session.sessionScopedSubscriptions = sessionScopedSubscriptions;
+  }
 }
 
 /**
- * Notify all subcribers of `key` that subscribed with
- * any of the specified handles
- * @param key
- * @param handles
+ * For session scoped subscriptions, any new sockets should also
+ * receive notifications
  */
-export function notify(
-  res: NextApiResponse | IO,
-  key: string,
-  ...handles: string[]
+export async function linkSocket(
+  req: NextApiRequest,
+  res: NextApiResponse,
+  socketId: string
 ) {
-  const rooms = getRooms(key, ...handles);
+  const io = res.socket.server.io;
 
-  const io = (res as NextApiResponse & IO).socket?.server.io ?? res;
+  const session = await getSession(req, res);
+  const sessionScopedSubscriptions = (session.sessionScopedSubscriptions ??
+    []) as string[];
 
-  io.to(rooms).emit("update", { key });
+  sessionScopedSubscriptions.forEach((key) => {
+    const room = `subscribers:${key}`;
+    io.to(socketId).socketsJoin(room);
+  });
+}
+
+export function notify(res: NextApiResponse | Server, key: string) {
+  const io = (res as NextApiResponse & Server).socket?.server.io ?? res;
+  const room = `subscribers:${key}`;
+  io.to(room).emit("subscription:update", key);
 }

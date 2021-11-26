@@ -6,7 +6,7 @@ const name = process.env.DB_NAME;
 const host = process.env.DB_HOST;
 const port = process.env.DB_PORT;
 
-const uri = `mongodb://${user}:${password}@${host}:${port}/${name}`;
+export const uri = `mongodb://${user}:${password}@${host}:${port}/${name}`;
 
 // Copied from https://github.com/vercel/next.js/blob/canary/examples/with-mongodb-mongoose/lib/dbConnect.js
 
@@ -19,25 +19,25 @@ const uri = `mongodb://${user}:${password}@${host}:${port}/${name}`;
 let cached = (global as any).mongoose;
 
 if (!cached) {
-  cached = (global as any).mongoose = { conn: null, promise: null }
+  cached = (global as any).mongoose = { conn: null, promise: null };
 }
 
 async function dbConnect() {
   if (cached.conn) {
-    return cached.conn
+    return cached.conn;
   }
 
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
-    }
+    };
 
     cached.promise = mongoose.connect(uri, opts).then((mongoose) => {
-      return mongoose
-    })
+      return mongoose;
+    });
   }
-  cached.conn = await cached.promise
-  return cached.conn
+  cached.conn = await cached.promise;
+  return cached.conn;
 }
 
-export default dbConnect
+export default dbConnect;

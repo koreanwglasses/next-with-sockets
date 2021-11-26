@@ -5,21 +5,22 @@ import { useEffect, useState, createContext } from "react";
 import { post } from "../lib/fetchers";
 
 export const SocketIOContext = createContext<{
-  socket: Socket;
-  socketIndex: number;
-} | null>(null);
+  socket?: Socket;
+  socketIndex?: number;
+}>({});
 
 function MyApp({ Component, pageProps }: AppProps) {
   // We only want one socket per client instance, so we
   // provide it at the root component level.
 
   const [context, setContext] = useState<{
-    socket: Socket;
-    socketIndex: number;
-  } | null>(null);
+    socket?: Socket;
+    socketIndex?: number;
+  }>({});
 
   useEffect(() => {
     const socket = io({ path: "/api/socket/io" });
+    setContext({ socket });
 
     socket.on("connect", async () => {
       const { socketIndex } = await post("/api/socket/session/link", {
@@ -27,12 +28,13 @@ function MyApp({ Component, pageProps }: AppProps) {
       });
       setContext({ socket, socketIndex });
     });
+
     socket.on("disconnect", () => {
-      setContext(null);
+      setContext({});
     });
 
     return () => {
-      setContext(null);
+      setContext({});
       socket.disconnect();
     };
   }, []);
