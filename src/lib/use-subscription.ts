@@ -1,29 +1,31 @@
 import useSWR, { useSWRConfig } from "swr";
 import { get } from "./fetchers";
-import { useSocket } from "./use-socket";
+import { useSocket, useSocketIndex } from "./use-socket";
 
 export function useSubscription<T = any>(
   pathname: string,
-  body?: Record<string, any>
+  query?: Record<string, any>
 ) {
+  const socketIndex = useSocketIndex();
   const { mutate } = useSWRConfig();
 
-  const ready = useSocket(
-    (socket) => {
-      socket.on("update", ({ key }) => {
-        if (key === pathname) mutate(pathname);
-      });
-    },
-    [mutate, pathname]
-  );
-
-  const result = useSWR<T>(
-    pathname + (ready ? "" : "#nosub"),
+  const result = useSWR<T & { dataKey: string }>(
+    socketIndex ? pathname : null,
     (pathname: string) =>
       get(pathname, {
-        ...(body ?? {}),
-        subscribe: !pathname.endsWith("#nosub"),
+        ...(query ?? {}),
+        subscribe: true,
+        socketIndex,
       })
+  );
+
+  useSocket(
+    () => ({
+      "subscription:update": (key: string) => {
+        if (key === result.data?.dataKey) mutate(pathname);
+      },
+    }),
+    [mutate, pathname, result.data?.dataKey]
   );
 
   return result;

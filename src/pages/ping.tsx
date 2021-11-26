@@ -16,19 +16,18 @@ const Ping = () => {
   const [messages, { push }] = useList<string>();
   const [waiting, setWaiting] = useState<boolean>();
   const [error, setError] = useState<Error>();
-
   const socketIndex = useSocketIndex();
 
   const { data } = useSubscription("/api/socket/session/link");
   const { socketsLinked } = data ?? {};
 
   useSocket(
-    (socket) => {
-      socket.on("message", (message: string) => {
+    () => ({
+      message: (message: string) => {
         push(message);
         setWaiting(false);
-      });
-    },
+      },
+    }),
     [push]
   );
 

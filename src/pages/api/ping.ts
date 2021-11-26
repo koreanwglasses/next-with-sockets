@@ -1,7 +1,7 @@
 import type { NextApiRequest } from "next";
 import {
   validateSocketIds,
-  validateSocketIndex,
+  validateSocket,
 } from "../../lib/validate-socket-ids";
 
 export default async function handler(
@@ -16,7 +16,7 @@ export default async function handler(
   if (req.body.socketIndex) {
     // If a specific index is specified, only pong
     // back to that socket
-    const socketId = await validateSocketIndex(req, res, req.body.socketIndex);
+    const socketId = await validateSocket(req, res);
     if (!socketId) return;
 
     setTimeout(() => io.to(socketId).emit("message", "pong"), 1000);

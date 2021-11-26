@@ -1,7 +1,9 @@
 import { NextApiRequest } from "next";
 import { Server as IO } from "socket.io";
 import { Server } from "http";
+import { Session } from "../../../models/sessions";
 import { notify } from "../../../lib/subscriptions";
+import dbConnect from "../../../lib/database";
 
 export const config = {
   api: {
@@ -18,8 +20,26 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       path: "/api/socket/io",
     });
     io.on("connect", (socket) => {
-      socket.on("disconnect", () => {
-        notify(io, "/api/socket/session/link", socket.id);
+      socket.on("disconnect", async () => {
+        await dbConnect();
+
+        const sessions = await Session.find({
+          "session.socketIds": socket.id,
+        })
+          .lean()
+          .exec();
+
+        await Session.updateMany(
+          { "session.socketIds": socket.id },
+          {
+            $pull: { "session.socketIds": socket.id },
+            $unset: { [`session.socketIndices.${socket.id}`]: "" },
+          }
+        ).exec();
+
+        sessions.forEach((session) => {
+          notify(io, "/api/socket/session/link#" + session._id);
+        });
       });
     });
 
