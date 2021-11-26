@@ -1,8 +1,15 @@
+export class FetchError extends Error {
+  code: number;
+  name: string;
+  constructor(response: Response, message: string) {
+    super(message);
+    this.code = response.status;
+    this.name = response.statusText;
+  }
+}
+
 async function parseResponse(response: Response) {
-  if (!response.ok)
-    throw Object.assign(new Error(response.statusText), {
-      code: response.status,
-    });
+  if (!response.ok) throw new FetchError(response, await response.text());
 
   try {
     return await response.clone().json();

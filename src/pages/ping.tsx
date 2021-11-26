@@ -15,7 +15,7 @@ import { post } from "../lib/fetchers";
 const Ping = () => {
   const [messages, { push }] = useList<string>();
   const [waiting, setWaiting] = useState<boolean>();
-  const [error, setError] = useState<Error & { code: number }>();
+  const [error, setError] = useState<Error>();
 
   const socketIndex = useSocketIndex();
 
@@ -53,7 +53,7 @@ const Ping = () => {
       </Typography>
       <Collapse in={!!error}>
         <Alert severity="error">
-          Error {error?.code}: {error?.message}
+          {error?.name}: {error?.message}
           <br />
           Try refreshing your browser
         </Alert>
