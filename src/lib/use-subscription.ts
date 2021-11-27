@@ -19,6 +19,12 @@ export function useSubscription<T = any>(
       })
   );
 
+  if (result.data && !result.data.dataKey) {
+    console.error(
+      "Server did not return a data key -- this hook will not work properly!"
+    );
+  }
+
   useSocket(
     () => ({
       "subscription:update": (key: string) => {
