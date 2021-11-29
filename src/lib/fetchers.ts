@@ -21,30 +21,64 @@ async function parseResponse(response: Response) {
   }
 }
 
-export async function post(url: string, body?: any) {
-  const response = await fetch(url, {
-    method: "post",
-    ...(body
+export function joinQuery(
+  url: string,
+  query?: Record<string, string | number | boolean | undefined>
+) {
+  return `${url}${
+    query
+      ? `${
+          url.includes("?") ? (url.endsWith("&") ? "" : "&") : "?"
+        }${Object.entries(query)
+          .filter(
+            ([key, value]) =>
+              typeof key !== "undefined" && typeof value !== "undefined"
+          )
+          .map(
+            ([key, value]) =>
+              `${encodeURIComponent(key)}=${encodeURIComponent(value!)}`
+          )
+          .join("&")}`
+      : ""
+  }`;
+}
+
+async function fetch2(
+  url: string,
+  method: string,
+  body?: any,
+  query?: Record<string, string | number | boolean | undefined>
+) {
+  const response = await fetch(
+    joinQuery(url, query),
+    method !== "get"
       ? {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body),
+          method,
+          ...(body
+            ? {
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(body),
+              }
+            : {}),
         }
-      : {}),
-  });
+      : undefined
+  );
   return parseResponse(response);
 }
 
-export async function get(url: string, body?: Record<string, unknown>) {
-  const response = await fetch(
-    `${url}${
-      body
-        ? `?${Object.entries(body)
-            .map(([key, value]) => `${key}=${value}`)
-            .join("&")}`
-        : ""
-    }`
-  );
-  return parseResponse(response);
+export async function post(
+  url: string,
+  body?: any,
+  query?: Record<string, string | number | boolean | undefined>
+) {
+  return fetch2(url, "post", body, query);
+}
+
+export async function get(
+  url: string,
+  query?: Record<string, string | number | boolean | undefined>
+) {
+  return fetch2(url, "get", undefined, query);
 }

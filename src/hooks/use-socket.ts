@@ -1,5 +1,5 @@
-import { useContext, useEffect, useMemo } from "react";
-import { Socket } from "socket.io-client";
+import { useCallback, useContext, useEffect, useMemo } from "react";
+import { get, post } from "../lib/fetchers";
 import { SocketIOContext } from "../pages/_app";
 
 export function useSocket(
@@ -35,7 +35,30 @@ export function useSocket(
   return !!context;
 }
 
-export function useSocketIndex() {
+export function useSocketIdx() {
   const context = useContext(SocketIOContext);
-  return context.socketIndex;
+  return context.socketIdx;
+}
+
+export function useSockPost() {
+  const socketIdx = useSocketIdx();
+  return useCallback(
+    (
+      url: string,
+      body?: any,
+      query: Record<string, string | number | boolean | undefined> = {}
+    ) => post(`${url}`, body, { ...query, socketIdx }),
+    [socketIdx]
+  );
+}
+
+export function useSockGet() {
+  const socketIdx = useSocketIdx();
+  return useCallback(
+    (
+      url: string,
+      query: Record<string, string | number | boolean | undefined> = {}
+    ) => get(url, { ...query, socketIdx }),
+    [socketIdx]
+  );
 }

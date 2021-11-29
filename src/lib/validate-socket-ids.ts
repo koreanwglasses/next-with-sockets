@@ -1,58 +1,34 @@
+import { Session } from "express-session";
 import { NextApiRequest } from "next";
-import { getSession } from "./get-session";
+import { Server as IO } from "socket.io";
 
-export async function validateSocketIds(
-  req: NextApiRequest,
-  res: NextApiResponse,
-  allowNone = false
-) {
-  const session = await getSession(req, res);
+export function getSocket(req: NextApiRequest) {
+  const socketIdx = +req.query.socketIdx;
+  if (isNaN(socketIdx)) throw { code: 400, message: "Invalid socketIdx" };
 
-  let socketIds = (session.socketIds ?? []) as string[];
+  pruneSockets(req);
 
-  const io = res.socket.server.io;
+  const socket = req.io.sockets.sockets.get(req.session.sockets[socketIdx]);
+  if (!socket) throw { code: 400, message: "Invalid socketIdx" };
 
-  // Clean up dead sockets
-  socketIds = socketIds.filter(
-    (socketId) => io.sockets.sockets.get(socketId)?.connected
-  );
-  session.socketIds = socketIds;
-
-  for (const socketId in session.socketIndices ?? {}) {
-    if (!io.sockets.sockets.get(socketId)?.connected)
-      delete session.socketIndices[socketId];
-  }
-
-  // Error if there are no sockets and `allowNone` is false
-  if (!allowNone && !socketIds?.length) {
-    return res.status(400).send("No sockets linked to current session");
-  }
-
-  return socketIds;
+  return socket;
 }
 
-export async function validateSocket(
-  req: NextApiRequest,
-  res: NextApiResponse,
-  socketIndex?: number
-) {
-  const socketIndex_ =
-    socketIndex ?? req.body.socketIndex ?? +(req.query.socketIndex ?? "0");
-  if (!socketIndex_) return res.status(400).send("Invalid socket index");
+export function pruneSockets(req: NextApiRequest): void;
+export function pruneSockets(session: Session, io: IO): void;
+export function pruneSockets(req_session: NextApiRequest | Session, io_?: IO) {
+  const session = (req_session as NextApiRequest).session ?? req_session;
+  const io = io_ ?? (req_session as NextApiRequest).io;
 
-  const socketIds = await validateSocketIds(req, res);
-  if (!socketIds) return;
+  if (!session.sockets) session.sockets = {};
 
-  const session = await getSession(req, res);
-  const socketId = socketIds.find(
-    (socketId) => session.socketIndices?.[socketId] === socketIndex_
-  );
-
-  const io = res.socket.server.io;
-
-  if (!io.sockets.sockets.get(socketId!)?.connected) {
-    return res.status(400).send("Invalid socket index");
+  // Remove disconnected sockets from session
+  for (const socketIdx in session.sockets) {
+    const socket = io.sockets.sockets.get(session.sockets[socketIdx]);
+    if (!socket?.connected) {
+      delete session.sockets[socketIdx];
+    }
   }
 
-  return socketId;
+  session.save();
 }
