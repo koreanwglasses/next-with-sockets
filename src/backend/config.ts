@@ -19,7 +19,7 @@ const config = {
   db: {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD ?? read(process.env.DB_PASSWORD_FILE),
-    name: process.env.DB_NAME,
+    name: process.env.DB_NAME || "app",
     host: process.env.DB_HOST || "localhost",
     port: process.env.DB_PORT || 27017,
   },

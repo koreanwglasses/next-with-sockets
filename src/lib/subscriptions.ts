@@ -7,7 +7,7 @@ export function dataKeyFromURL(
   url: string,
   query?: Record<string, string | number | boolean | undefined>
 ) {
-  const urlObj = new URL(joinQuery(url, query));
+  const urlObj = new URL(joinQuery(url, query), "http://example.com");
   urlObj.searchParams.delete("subscribe");
   urlObj.searchParams.delete("socketIdx");
   const searchParams = [...urlObj.searchParams.entries()].sort();
@@ -38,9 +38,9 @@ export function subscribable<T>({
       const res_ = Object.create(res);
       res_.send = send;
       res_.json = send;
-      handler(req, res_);
+      return handler(req, res_);
     } else {
-      handler(req, res);
+      return handler(req, res);
     }
   };
 }

@@ -25,15 +25,17 @@ export function joinQuery(
   url: string,
   query?: Record<string, string | number | boolean | undefined>
 ) {
+  const queryEntries =
+    query &&
+    Object.entries(query).filter(
+      ([key, value]) =>
+        typeof key !== "undefined" && typeof value !== "undefined"
+    );
   return `${url}${
-    query
+    queryEntries?.length
       ? `${
           url.includes("?") ? (url.endsWith("&") ? "" : "&") : "?"
-        }${Object.entries(query)
-          .filter(
-            ([key, value]) =>
-              typeof key !== "undefined" && typeof value !== "undefined"
-          )
+        }${queryEntries
           .map(
             ([key, value]) =>
               `${encodeURIComponent(key)}=${encodeURIComponent(value!)}`

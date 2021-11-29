@@ -4,12 +4,14 @@ import { Server as IO, Socket, Handshake } from "socket.io";
 import { Server } from "http";
 
 import iosession from "express-socket.io-session";
+import { pruneSockets } from "../lib/validate-socket-ids";
 
 import sessionFactory from "express-session";
 import MongoDBStoreFactory from "connect-mongodb-session";
 import { uri } from "./database";
 
 import config from "./config";
+import { initialize } from "./initialize";
 
 // Next.js integration
 const app = next({ dev: config.dev });
@@ -19,7 +21,7 @@ const handle = app.getRequestHandler();
 const MongoDBStore = MongoDBStoreFactory(sessionFactory);
 const store = new MongoDBStore({ uri, collection: "sessions" });
 
-app.prepare().then(() => {
+app.prepare().then(async () => {
   // Initialize Express and Socket.IO
   const server = express();
   const io = new IO();
@@ -60,31 +62,17 @@ app.prepare().then(() => {
     return handle(req, res);
   });
 
+  const httpServer = new Server(server);
+  // Attach Socket.IO, which overrides the /socket.io* routes
+  io.attach(httpServer);
+
+  // Call additional initialization routines
+  await initialize(httpServer, io);
+
   // Start the server
-  const httpServer = server.listen(config.server.port, () => {
+  httpServer.listen(config.server.port, () => {
     console.log(
       `> Ready on http://${config.server.host}:${config.server.port}`
     );
   });
-
-  initialize(httpServer, io);
-
-  // Attach Socket.IO, which overrides the /socket.io* routes
-  io.attach(httpServer);
 });
-
-// Additional initialization
-// i.e. setting up listeners, background processes, etc.
-
-import { pruneSockets } from "../lib/validate-socket-ids";
-import { notify } from "../lib/subscriptions";
-
-function initialize(httpServer: Server, io: IO) {
-  io.on("connect", (socket: Socket & { handshake: Handshake }) => {
-    const session = socket.handshake.session!;
-    notify(io, `/api/socket-count#${session.id}`);
-    socket.on("disconnect", () => {
-      notify(io, `/api/socket-count#${session.id}`);
-    });
-  });
-}

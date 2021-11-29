@@ -1,4 +1,4 @@
-import '../styles/globals.css'
+import "../styles/globals.css";
 import type { AppProps } from "next/app";
 import { io, Socket } from "socket.io-client";
 import { useEffect, useState, createContext } from "react";
