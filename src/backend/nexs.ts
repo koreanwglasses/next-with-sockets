@@ -1,7 +1,8 @@
-import express from "express";
-import next from "next";
-import { Server as IO, Socket, Handshake } from "socket.io";
+import Express from "express";
+import Next from "next";
+import { Server as IO } from "socket.io";
 import http from "http";
+import https from "https";
 
 import iosession from "express-socket.io-session";
 import { pruneSockets } from "../lib/get-socket";
@@ -10,32 +11,36 @@ import { pruneSockets } from "../lib/get-socket";
 //  EXpress
 //    Socket.IO
 export interface NEXS {
-  prepare(): Promise<void>
-  io: IO
-  server: http.Server
+  prepare(): Promise<void>;
+  io: IO;
+  server: http.Server;
 }
 
-export function nexs({
+function nexs({
   session,
   dev,
+  express: express_,
+  server: server_,
 }: {
-  session: express.RequestHandler;
-  dev: boolean;
+  session: Express.RequestHandler;
+  dev?: boolean;
+  express?: Express.Express;
+  server?: http.Server | https.Server;
 }) {
   // Next.js integration
-  const nextServer = next({ dev });
-  const handle = nextServer.getRequestHandler();
+  const next = Next({ dev });
+  const handle = next.getRequestHandler();
 
   // Initialize Express and Socket.IO
-  const expressServer = express();
+  const express = express_ ?? Express();
   const io = new IO();
 
   // Session setup
-  expressServer.use(session);
+  if (!express_) express.use(session);
   io.use(iosession(session, { autoSave: true }));
 
   // Socket.IO setup
-  io.on("connect", (socket: Socket & { handshake: Handshake }) => {
+  io.on("connect", (socket) => {
     const session = socket.handshake.session!;
     pruneSockets(session, io);
 
@@ -54,19 +59,21 @@ export function nexs({
   });
 
   // Forward all routes to Next.js
-  expressServer.all("*", (req, res) => {
+  express.all("*", (req, res) => {
     (req as any).io = io;
     return handle(req, res);
   });
 
-  const httpServer = http.createServer(expressServer);
+  const server = server_ ?? http.createServer(express);
 
   // Attach Socket.IO, which overrides the /socket.io* routes
-  io.attach(httpServer);
+  io.attach(server);
 
   return {
-    prepare: () => nextServer.prepare(),
+    prepare: () => next.prepare(),
     io,
-    server: httpServer,
+    server,
   };
 }
+
+export default nexs;

@@ -1,11 +1,9 @@
-import { Socket, Handshake } from "socket.io";
-
 import sessionFactory from "express-session";
 import MongoDBStoreFactory from "connect-mongodb-session";
 import { uri } from "./database";
 
 import config from "./config";
-import { nexs } from "./nexs";
+import nexs from "./nexs";
 
 import { dbConnect } from "./database";
 import { notify } from "../lib/subscriptions";
@@ -30,7 +28,7 @@ app.prepare().then(async () => {
   await dbConnect();
 
   const io = app.io;
-  io.on("connect", (socket: Socket & { handshake: Handshake }) => {
+  io.on("connect", (socket) => {
     const session = socket.handshake.session!;
     notify(io, `/api/socket-count#${session.id}`);
     socket.on("disconnect", () => {
