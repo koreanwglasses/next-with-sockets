@@ -4,7 +4,7 @@ import { Server as IO, Socket, Handshake } from "socket.io";
 import { Server } from "http";
 
 import iosession from "express-socket.io-session";
-import { pruneSockets } from "../lib/validate-socket-ids";
+import { pruneSockets } from "../lib/get-socket";
 
 import sessionFactory from "express-session";
 import MongoDBStoreFactory from "connect-mongodb-session";
@@ -67,7 +67,7 @@ app.prepare().then(async () => {
   io.attach(httpServer);
 
   // Call additional initialization routines
-  await initialize(httpServer, io);
+  await initialize(io, httpServer);
 
   // Start the server
   httpServer.listen(config.server.port, () => {

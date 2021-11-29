@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { subscribable } from "../../lib/subscriptions";
-import { pruneSockets } from "../../lib/validate-socket-ids";
+import { pruneSockets } from "../../lib/get-socket";
 
 export default subscribable({
   dataKey: (req) => `/api/socket-count#${req.session.id}`,

@@ -1,6 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo } from "react";
 import { get, post } from "../lib/fetchers";
-import { SocketIOContext } from "../pages/_app";
+import { SocketIOContext } from "../components/socket-provider";
 
 export function useSocket(
   listeners: () => {

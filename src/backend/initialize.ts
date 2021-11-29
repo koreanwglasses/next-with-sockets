@@ -6,7 +6,7 @@ import { Server } from "http";
 import { dbConnect } from "./database";
 import { notify } from "../lib/subscriptions";
 
-export async function initialize(httpServer: Server, io: IO) {
+export async function initialize(io: IO, httpServer: Server) {
   await dbConnect();
 
   io.on("connect", (socket: Socket & { handshake: Handshake }) => {

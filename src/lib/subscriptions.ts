@@ -1,7 +1,7 @@
 import { NextApiHandler, NextApiRequest, NextApiResponse } from "next";
 import { Server } from "socket.io";
 import { joinQuery } from "./fetchers";
-import { getSocket } from "./validate-socket-ids";
+import { getSocket } from "./get-socket";
 
 export function dataKeyFromURL(
   url: string,

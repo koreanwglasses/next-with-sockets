@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getSocket } from "../../lib/validate-socket-ids";
+import { getSocket } from "../../lib/get-socket";
 
 export default async function handler(
   req: NextApiRequest,
