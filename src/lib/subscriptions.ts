@@ -14,32 +14,35 @@ export function dataKeyFromURL(
   return joinQuery(urlObj.pathname, Object.fromEntries(searchParams));
 }
 
-export function subscribable<T>(
-  dataKey?: string | ((req: NextApiRequest, res: NextApiResponse) => string)
-) {
-  return (handler: NextApiHandler<T>): NextApiHandler =>
-    (req: NextApiRequest, res: NextApiResponse) => {
-      if (JSON.parse((req.query.subscribe ?? "false") as string)) {
-        const dataKey_ =
-          typeof dataKey === "string"
-            ? dataKey
-            : typeof dataKey === "function"
-            ? dataKey(req, res)
-            : dataKeyFromURL(req.url!);
+export function subscribable<T>({
+  dataKey,
+  handler,
+}: {
+  dataKey?: string | ((req: NextApiRequest, res: NextApiResponse) => string);
+  handler: NextApiHandler<T>;
+}): NextApiHandler {
+  return (req: NextApiRequest, res: NextApiResponse) => {
+    if (JSON.parse((req.query.subscribe ?? "false") as string)) {
+      const dataKey_ =
+        typeof dataKey === "string"
+          ? dataKey
+          : typeof dataKey === "function"
+          ? dataKey(req, res)
+          : dataKeyFromURL(req.url!);
 
-        const send = (data: T) => {
-          subscribe(req, dataKey_);
-          res.json({ data, dataKey: dataKey_ });
-        };
+      const send = (data: T) => {
+        subscribe(req, dataKey_);
+        res.json({ data, dataKey: dataKey_ });
+      };
 
-        const res_ = Object.create(res);
-        res_.send = send;
-        res_.json = send;
-        handler(req, res_);
-      } else {
-        handler(req, res);
-      }
-    };
+      const res_ = Object.create(res);
+      res_.send = send;
+      res_.json = send;
+      handler(req, res_);
+    } else {
+      handler(req, res);
+    }
+  };
 }
 
 export function subscribe(req: NextApiRequest, dataKey: string) {
